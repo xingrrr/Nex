@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nex</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%2309b3e6'/><text x='50' y='60' font-family='Arial, sans-serif' font-weight='bold' font-size='40' text-anchor='middle' fill='white'>Nex</text></svg>">
+
+    <style>
+        /* === Custom Theme Configuration (Xero Light) === */
+        :root {
+            --xero-blue: #09b3e6;
+            --xero-navy: #13243e; 
+            --xero-teal: #4dd0a8;
+            --bg-light: #f4f6f8; 
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            color: #333333;
+        }
+
+        /* Smooth Transitions */
+        .list-item {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* "Done" State */
+        .item-done {
+            background-color: #e0f7fa !important; 
+            color: #008a8a !important; 
+            text-decoration: line-through;
+            border-color: #b2ebf2 !important;
+            opacity: 0.8;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="relative bg-white rounded-3xl shadow-xl w-full max-w-lg flex flex-col max-h-[90vh] overflow-hidden border border-gray-100">
+        
+        <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#09b3e6] via-[#f28cb5] to-[#ffd35c]"></div>
+
+        <div class="p-6 md:p-8 flex-grow flex flex-col min-h-0 relative z-10">
+            
+            <div class="flex items-center justify-center mb-6 space-x-3">
+                <div class="w-2.5 h-2.5 rounded-full bg-[#09b3e6]"></div>
+                <h1 class="text-3xl font-bold text-center text-[#13243e] tracking-tight">
+                    Nex
+                </h1>
+                <div class="w-2.5 h-2.5 rounded-full bg-[#f28cb5]"></div>
+            </div>
+
+            <div class="bg-blue-50 border border-blue-100 text-slate-600 p-4 rounded-xl mb-6 text-sm">
+                <div class="flex items-start gap-3">
+                    <span class="text-[#09b3e6] font-bold text-lg">ℹ</span>
+                    <div>
+                        <p class="font-semibold text-[#13243e] mb-1">Quick Start:</p>
+                        <ol class="list-decimal list-inside space-y-1 text-slate-500">
+                            <li>Load items below.</li>
+                            <li>Click <span class="font-bold text-[#09b3e6]">Copy Next</span>.</li>
+                            <li>Progress is saved automatically.</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <button id="copyButton" 
+                    class="group w-full bg-[#09b3e6] hover:bg-[#08a0ce] text-white font-bold py-4 px-6 rounded-full shadow-md hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-blue-200 transition-all duration-200 text-lg my-2 flex items-center justify-center gap-2">
+                <span>Copy Next Item</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+            </button>
+            
+            <div id="counterArea" class="text-center text-slate-400 my-2 text-sm hidden font-mono">
+                <span id="copiedCount" class="font-bold text-[#09b3e6]">0</span> / 
+                <span id="totalCount" class="font-bold text-slate-600">0</span>
+                <span>PROCESSED</span>
+            </div>
+
+            <div id="messageArea" class="text-center font-medium p-2 h-8 text-sm opacity-0 transition-opacity duration-300"></div>
+
+            <div class="mt-2 flex-grow flex flex-col min-h-0">
+                <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3 ml-1">Current Queue</h2>
+                <div id="listContainer" class="bg-gray-50 p-2 rounded-2xl border border-gray-200 flex-grow overflow-y-auto space-y-2 shadow-inner">
+                    <p id="listPlaceholder" class="text-slate-400 text-center py-10 italic text-sm">
+                        Waiting for data... <br> Load your list below.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 md:p-8 border-t border-gray-100 bg-white rounded-b-3xl flex-shrink-0 relative">
+            <div class="space-y-4 relative z-10">
+                <div>
+                    <label for="idList" class="block text-xs font-bold uppercase text-slate-500 mb-2 ml-1">
+                        Input List
+                    </label>
+                    <textarea id="idList" rows="4" 
+                              class="w-full p-4 bg-white text-slate-700 border border-gray-300 rounded-xl shadow-sm focus:ring-2 focus:ring-[#09b3e6] focus:border-[#09b3e6] transition-all placeholder-gray-400 font-mono text-sm"
+                              placeholder="Item-001&#10;Item-002&#10;Item-003"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <button id="loadButton" 
+                            class="w-full bg-gray-100 border border-gray-200 text-slate-600 font-semibold py-3 px-4 rounded-xl hover:bg-gray-200 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-gray-300 transition duration-200">
+                        Load List
+                    </button>
+                    <button id="clearButton" 
+                            class="w-full bg-white border border-gray-200 text-red-500 font-semibold py-3 px-4 rounded-xl hover:bg-red-50 hover:border-red-200 focus:outline-none focus:ring-2 focus:ring-red-100 transition duration-200">
+                        Clear All
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Element References ---
+        const idListInput = document.getElementById('idList');
+        const loadButton = document.getElementById('loadButton');
+        const copyButton = document.getElementById('copyButton');
+        const clearButton = document.getElementById('clearButton');
+        const messageArea = document.getElementById('messageArea');
+        const listContainer = document.getElementById('listContainer');
+        const listPlaceholder = document.getElementById('listPlaceholder');
+
+        const counterArea = document.getElementById('counterArea');
+        const copiedCountEl = document.getElementById('copiedCount');
+        const totalCountEl = document.getElementById('totalCount');
+
+        // --- localStorage Keys (Using new 'Nex' naming convention) ---
+        const STORAGE_KEY_IDS = 'nexApp_idList';
+        const STORAGE_KEY_DONE_PREFIX = 'nexApp_done_';
+
+        // --- Event Listeners ---
+        loadButton.addEventListener('click', handleLoadList);
+        copyButton.addEventListener('click', handleCopyNext);
+        clearButton.addEventListener('click', confirmClear);
+        document.addEventListener('DOMContentLoaded', loadFromStorage);
+
+        // --- Functions ---
+
+        function handleLoadList() {
+            const idText = idListInput.value;
+            localStorage.setItem(STORAGE_KEY_IDS, idText);
+            renderList();
+        }
+
+        function loadFromStorage() {
+            // Check for old keys to support migration if user had the previous version
+            const oldKey = 'idCopierApp_idList';
+            if(localStorage.getItem(oldKey) && !localStorage.getItem(STORAGE_KEY_IDS)){
+                 localStorage.setItem(STORAGE_KEY_IDS, localStorage.getItem(oldKey));
+            }
+            
+            const savedIds = localStorage.getItem(STORAGE_KEY_IDS);
+            if (savedIds) {
+                idListInput.value = savedIds;
+                renderList();
+            }
+        }
+
+        function renderList() {
+            const ids = (localStorage.getItem(STORAGE_KEY_IDS) || '')
+                .split('\n')
+                .map(id => id.trim())
+                .filter(id => id.length > 0);
+
+            listContainer.innerHTML = ''; 
+
+            if (ids.length === 0) {
+                listContainer.appendChild(listPlaceholder);
+                counterArea.classList.add('hidden');
+                return;
+            }
+
+            ids.forEach(id => {
+                // Check new key first, then fallback to old key structure for backward compatibility
+                let isDone = localStorage.getItem(STORAGE_KEY_DONE_PREFIX + id) === 'true';
+                if(!isDone) {
+                     isDone = localStorage.getItem('idCopierApp_done_' + id) === 'true';
+                }
+
+                const item = document.createElement('div');
+                item.textContent = id;
+                item.dataset.id = id;
+                item.className = 'list-item p-3 mb-2 bg-white rounded-lg border border-gray-200 font-mono text-slate-700 text-sm flex items-center shadow-sm';
+                
+                const dot = document.createElement('span');
+                dot.className = 'w-2 h-2 rounded-full mr-3 bg-gray-300 transition-colors duration-300';
+                if(isDone) dot.className = 'w-2 h-2 rounded-full mr-3 bg-[#09b3e6]'; 
+                
+                item.prepend(dot);
+
+                if (isDone) {
+                    item.classList.add('item-done');
+                }
+                
+                listContainer.appendChild(item);
+            });
+
+            updateCounters(); 
+        }
+
+        function handleCopyNext() {
+            const nextItem = listContainer.querySelector('.list-item:not(.item-done)');
+
+            if (!nextItem) {
+                showMessage('All items have been copied!', 'success');
+                return;
+            }
+
+            const idToCopy = nextItem.dataset.id;
+            
+            copyToClipboard(idToCopy);
+
+            nextItem.classList.add('item-done');
+            nextItem.querySelector('span').classList.remove('bg-gray-300');
+            nextItem.querySelector('span').classList.add('bg-[#09b3e6]');
+
+            localStorage.setItem(STORAGE_KEY_DONE_PREFIX + idToCopy, 'true');
+
+            updateCounters(); 
+
+            // Show message with updated requirements
+            showMessage(`Copied: ${idToCopy}`, 'success');
+
+            nextItem.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+        }
+
+        function updateCounters() {
+            const totalItems = document.querySelectorAll('.list-item').length;
+            const copiedItems = document.querySelectorAll('.item-done').length;
+
+            copiedCountEl.textContent = copiedItems;
+            totalCountEl.textContent = totalItems;
+
+            if (totalItems === 0) {
+                counterArea.classList.add('hidden');
+            } else {
+                counterArea.classList.remove('hidden');
+            }
+        }
+
+        function confirmClear() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-gray-900 bg-opacity-30 flex items-center justify-center p-4 z-50 backdrop-blur-sm';
+            modal.innerHTML = `
+                <div class="bg-white border border-gray-200 p-6 rounded-2xl shadow-2xl max-w-sm w-full">
+                    <h3 class="text-lg font-bold mb-4 text-slate-800">Clear List?</h3>
+                    <p class="text-sm text-slate-500 mb-6">This will remove all items and reset your progress. This action cannot be undone.</p>
+                    <div class="flex justify-end gap-3">
+                        <button id="cancelClear" class="bg-gray-100 text-slate-600 font-semibold py-2 px-4 rounded-lg hover:bg-gray-200 transition">Cancel</button>
+                        <button id="confirmClear" class="bg-red-50 text-red-600 border border-red-100 font-semibold py-2 px-4 rounded-lg hover:bg-red-100 transition">Clear All</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            document.getElementById('cancelClear').addEventListener('click', () => {
+                document.body.removeChild(modal);
+            });
+
+            document.getElementById('confirmClear').addEventListener('click', () => {
+                // Clear both new and old keys
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith('nexApp_') || key.startsWith('idCopierApp_')) {
+                        localStorage.removeItem(key);
+                    }
+                });
+
+                idListInput.value = '';
+                listContainer.innerHTML = '';
+                listContainer.appendChild(listPlaceholder);
+                showMessage('Progress cleared', 'info');
+                
+                updateCounters(); 
+                
+                document.body.removeChild(modal);
+            });
+        }
+        
+        let messageTimeout;
+        function showMessage(text, type = 'info') {
+            // Clear any existing timeout so messages don't overlap awkwardly
+            if(messageTimeout) clearTimeout(messageTimeout);
+
+            messageArea.textContent = text;
+            messageArea.classList.remove('opacity-0');
+            
+            // Smaller font (text-xs) and specific styling
+            if (type === 'success') {
+                messageArea.className = 'text-center font-medium text-xs p-2 h-8 mt-4 text-[#09b3e6] transition-opacity duration-300';
+            } else {
+                messageArea.className = 'text-center font-medium text-xs p-2 h-8 mt-4 text-slate-500 transition-opacity duration-300';
+            }
+
+            // Increased duration to 4500ms (4.5 seconds)
+            messageTimeout = setTimeout(() => {
+                messageArea.classList.add('opacity-0');
+            }, 4500);
+        }
+
+        function copyToClipboard(text) {
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = text;
+            tempTextArea.style.position = 'fixed'; 
+            tempTextArea.style.left = '-9999px';
+            tempTextArea.style.top = '0';
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            try {
+                document.execCommand('copy');
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+            }
+            document.body.removeChild(tempTextArea);
+        }
+
+    </script>
+</body>
+</html>
